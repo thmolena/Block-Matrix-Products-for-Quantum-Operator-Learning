@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Certified rank-depth adaptive block matrix products for quantum operator learning.">
+  <title>Rank--Depth Adaptive Block Matrix Products</title>
+  <style>
+    :root { --ink:#132238; --muted:#586579; --paper:#fbfaf7; --navy:#173f67; --teal:#177f79; --line:#d9dee5; --warm:#f0ebe2; }
+    * { box-sizing:border-box; }
+    body { margin:0; color:var(--ink); background:var(--paper); font:17px/1.62 Georgia,"Times New Roman",serif; }
+    header { padding:5.5rem 1.5rem 4.5rem; color:white; background:linear-gradient(135deg,#112b49,#1d527c 58%,#177f79); }
+    .wrap { width:min(1080px,calc(100% - 2.4rem)); margin:auto; }
+    .kicker { margin:0 0 .8rem; font:600 .78rem/1.3 system-ui,sans-serif; letter-spacing:.14em; text-transform:uppercase; opacity:.82; }
+    h1 { max-width:900px; margin:0; font-size:clamp(2.2rem,5.5vw,4.8rem); line-height:1.04; font-weight:500; letter-spacing:-.035em; }
+    .lead { max-width:790px; margin:1.5rem 0 0; font-size:1.23rem; color:#edf6f5; }
+    .actions { display:flex; gap:.8rem; flex-wrap:wrap; margin-top:2rem; }
+    .button { display:inline-block; padding:.7rem 1rem; border:1px solid rgba(255,255,255,.68); color:white; text-decoration:none; font:600 .85rem system-ui,sans-serif; border-radius:4px; }
+    .button.primary { background:white; color:var(--navy); }
+    main { padding:4rem 0 5rem; }
+    section { margin:0 0 4.5rem; }
+    h2 { margin:0 0 1rem; font-size:2rem; font-weight:500; letter-spacing:-.02em; }
+    h3 { margin:.2rem 0 .5rem; font:650 1rem/1.3 system-ui,sans-serif; }
+    p { max-width:820px; }
+    .equation { margin:1.8rem 0; padding:1.3rem 1.5rem; overflow:auto; background:white; border-left:4px solid var(--teal); box-shadow:0 5px 22px rgba(20,40,60,.07); font-size:1.08rem; }
+    .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; }
+    .card { padding:1.25rem; background:white; border:1px solid var(--line); border-radius:5px; }
+    .metric { font:650 2rem/1 system-ui,sans-serif; color:var(--teal); }
+    .card p { margin:.55rem 0 0; color:var(--muted); font-size:.94rem; }
+    figure { margin:1.3rem 0; padding:1rem; background:white; border:1px solid var(--line); }
+    figure img { display:block; width:100%; height:auto; }
+    figcaption { margin:.8rem .25rem .1rem; color:var(--muted); font-size:.9rem; }
+    .figures { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+    table { width:100%; border-collapse:collapse; background:white; font-variant-numeric:tabular-nums; }
+    th,td { padding:.72rem .75rem; border-bottom:1px solid var(--line); text-align:right; }
+    th:first-child,td:first-child { text-align:left; }
+    th { color:var(--muted); font:650 .76rem/1.25 system-ui,sans-serif; text-transform:uppercase; letter-spacing:.05em; }
+    .note { padding:1rem 1.2rem; background:var(--warm); border-radius:4px; }
+    code { font-size:.88em; }
+    footer { padding:2rem 0; color:var(--muted); border-top:1px solid var(--line); font-size:.88rem; }
+    a { color:#0d5f77; }
+    @media (max-width:760px) { header{padding-top:4rem}.grid,.figures{grid-template-columns:1fr} th,td{padding:.55rem .35rem;font-size:.84rem} }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <p class="kicker">Matrix functions · block Krylov methods · operator learning</p>
+      <h1>Rank--Depth Adaptive Block Matrix Products</h1>
+      <p class="lead">A preflight certificate selects probe rank and Krylov depth before the first Hamiltonian application, then evaluates a full block loss gradient through one compressed factorization.</p>
+      <div class="actions">
+        <a class="button primary" href="main.pdf">Read the manuscript</a>
+        <a class="button" href="code/README.md">Reproduce the study</a>
+        <a class="button" href="code/results/locked_results.json">Inspect locked results</a>
+      </div>
+    </div>
+  </header>
+  <main class="wrap">
+    <section>
+      <h2>Certified resource selection</h2>
+      <p>For an affine symmetric operator family and correlated probe block, the method combines a uniform parameter-box spectral bound, an explicit SVD truncation term, and cosine Taylor tails. Rank and depth are selected entirely from registered inputs.</p>
+      <div class="equation">‖g − ĝ<sub>m,r</sub>‖<sub>2</sub> ≤ (Σ<sub>j</sub> η<sub>j,m,r</sub><sup>2</sup>)<sup>1/2</sup> ≤ ε</div>
+      <div class="grid">
+        <article class="card"><div class="metric">5--6</div><h3>Selected rank</h3><p>Eight correlated probe columns are compressed with the discarded singular tail charged to the certificate.</p></article>
+        <article class="card"><div class="metric">24</div><h3>Selected depth</h3><p>The registered tolerance is 10<sup>−3</sup> for evolution times 2, 4, and 6.</p></article>
+        <article class="card"><div class="metric">120--144</div><h3>Vector equivalents</h3><p>The same-depth uncompressed block requires 192; coordinatewise finite differences require 1,152.</p></article>
+      </div>
+    </section>
+    <section>
+      <h2>Evidence carried by the figures</h2>
+      <div class="figures">
+        <figure><img src="code/results/figures/rank_depth_map.png" alt="Heatmaps of selected rank and Krylov depth across tolerance and time horizon"><figcaption>Rank responds mainly to tolerance; depth grows with time horizon and requested accuracy. Every cell satisfies the preflight certificate.</figcaption></figure>
+        <figure><img src="code/results/figures/certificate_frontier.png" alt="Certificate and observed gradient error versus Krylov depth"><figcaption>The bound covers every observed error and exposes substantial conservatism after the numerical reference floor is reached.</figcaption></figure>
+        <figure><img src="code/results/figures/probe_spectrum.png" alt="Normalized singular values for four probe blocks"><figcaption>The singular spectra identify the retained ranks; discarded directions are bounded rather than silently removed.</figcaption></figure>
+        <figure><img src="code/results/figures/runtime_scaling.png" alt="Runtime scaling for adaptive, full-block, and finite-difference gradients"><figcaption>Three positive CPU comparisons and the largest-matrix timing exception are shown together.</figcaption></figure>
+      </div>
+    </section>
+    <section>
+      <h2>Authenticated matrix study</h2>
+      <table>
+        <thead><tr><th>Matrix</th><th>Dimension</th><th>Rank</th><th>Depth</th><th>Certificate</th><th>Full / proposed time</th></tr></thead>
+        <tbody>
+          <tr><td>Si2</td><td>769</td><td>6</td><td>24</td><td>1.40×10<sup>−4</sup></td><td>1.36</td></tr>
+          <tr><td>SiH4</td><td>5,041</td><td>5</td><td>24</td><td>2.09×10<sup>−4</sup></td><td>1.65</td></tr>
+          <tr><td>benzene</td><td>8,219</td><td>6</td><td>24</td><td>1.39×10<sup>−4</sup></td><td>2.04</td></tr>
+          <tr><td>Si5H12</td><td>19,896</td><td>6</td><td>24</td><td>1.47×10<sup>−4</sup></td><td>0.99</td></tr>
+        </tbody>
+      </table>
+      <p class="note">The PARSEC Hamiltonians are authentic SuiteSparse inputs with pinned archive digests. The parameter fields, probes, and targets are deterministic numerical constructions. The largest case demonstrates that reduced action count does not guarantee lower wall time.</p>
+    </section>
+    <section>
+      <h2>Reproduction contract</h2>
+      <p>The installable package records all timing repetitions, numerical errors, certificates, action ledgers, archive digests, orthogonality defects, and the timing-independent semantic digest <code>eae62cf6af1c…</code>. The small dense tests independently compare projected derivatives with direct eigendecompositions.</p>
+    </section>
+  </main>
+  <footer><div class="wrap">Research manuscript and CPU reproduction package · August 2026</div></footer>
+</body>
+</html>

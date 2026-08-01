@@ -1,0 +1,17 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+.venv/
+build/
+dist/
+main.aux
+main.bbl
+main.blg
+main.log
+main.out
+main.synctex.gz
+tmp/
+
