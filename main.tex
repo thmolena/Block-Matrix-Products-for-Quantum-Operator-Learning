@@ -1,4 +1,5 @@
-\documentclass[aps,pra,twocolumn,superscriptaddress,nofootinbib,longbibliography]{revtex4-2}
+\documentclass[10pt,letterpaper,twoside]{article}
+\usepackage{code/manuscript_assets/researchpreprint}
 
 \usepackage{amsmath,amssymb,amsthm,mathtools}
 \usepackage{bm}
@@ -28,9 +29,12 @@
 \title{Rank--Depth Adaptive Block Matrix Products for Quantum Operator Learning}
 
 \author{Molena Huynh}
-\affiliation{Independent Researcher, Raleigh, North Carolina, USA}
+\email{molena.huynh@jmp.com}
+\affiliation{North Carolina State University}
 
 \date{August 1, 2026}
+
+\maketitle
 
 \begin{abstract}
 Learning a parameterized quantum operator from many correlated preparations
@@ -58,7 +62,6 @@ operator benchmark: the Hamiltonians are authentic, while the parameter
 directions, preparations, and targets are reproducible constructed quantities.
 \end{abstract}
 
-\maketitle
 
 \section{Introduction}
 
@@ -474,7 +477,7 @@ for SiH4 and rank six for the other matrices.  The discarded singular tail is
 therefore explicitly charged to Eq.~\eqref{eq:compression-gradient}; it is not
 treated as zero.
 
-\begin{figure*}[t]
+\begin{figure}[t]
 \centering
 \includegraphics[width=0.92\textwidth]{code/results/figures/rank_depth_map.pdf}
 \caption{Preflight choices on the Si2 development matrix over a registered
@@ -482,7 +485,7 @@ time--tolerance grid.  Rank reacts mainly to tolerance, whereas depth grows with
 both evolution time and requested accuracy.  Every displayed cell satisfies the
 preflight certificate.}
 \label{fig:map}
-\end{figure*}
+\end{figure}
 
 The rank--depth map in Fig.~\ref{fig:map} is the central adaptation diagnostic.
 For maximum time two, selected depths range from 10 to 12; at maximum time eight
@@ -491,7 +494,7 @@ five to six.  Thus the rule does not merely reproduce one hard-coded depth.
 
 \subsection{Certificate and observed accuracy}
 
-\begin{figure*}[t]
+\begin{figure}[t]
 \centering
 \includegraphics[width=0.95\textwidth]{code/results/figures/certificate_frontier.pdf}
 \caption{Preflight certificate and observed error relative to the depth-28
@@ -500,7 +503,7 @@ vertical line is the first feasible depth.  The certificate covers every
 observed error but is highly conservative after the numerical error reaches the
 reference floor.}
 \label{fig:certificate}
-\end{figure*}
+\end{figure}
 
 Figure~\ref{fig:certificate} exposes rather than suppresses certificate slack.
 Observed errors decrease below $10^{-10}$ by depth 8--10 and approach the
@@ -509,7 +512,7 @@ certificate is therefore a uniform safety contract, not an estimator of the
 realized error.  Its purpose is to remove reference-dependent stopping from the
 algorithm.
 
-\begin{table*}[t]
+\begin{table}[t]
 \caption{Primary registered result at tolerance $10^{-3}$.  ``Work'' is the
 Hamiltonian-vector equivalent count $mr$.  ``Ratio'' is the paired median time of
 the same-depth full block divided by the complete preflight time.}
@@ -522,7 +525,7 @@ matrix & $n$ & rank & depth & certificate & error & work & ratio\\
 \ResultRows
 \bottomrule
 \end{tabular}
-\end{table*}
+\end{table}
 
 All errors in Table~\ref{tab:primary} lie below their bounds.  The selected work
 is 120 for SiH4 and 144 for the other matrices, compared with 192 for the
@@ -674,15 +677,17 @@ baseline rather than an extrapolation.
 
 \bibitem{higham2008}
 N. J. Higham, \textit{Functions of Matrices: Theory and Computation}
-(SIAM, Philadelphia, 2008).
+(Philadelphia, 2008), doi:10.1137/1.9780898717778.
 
 \bibitem{saad1992}
 Y. Saad, Analysis of some Krylov subspace approximations to the matrix
-exponential operator, SIAM J. Numer. Anal. \textbf{29}, 209 (1992).
+exponential operator, vol.~\textbf{29}, pp.~209--228 (1992),
+doi:10.1137/0729014.
 
 \bibitem{hochbruck1997}
 M. Hochbruck and C. Lubich, On Krylov subspace approximations to the matrix
-exponential operator, SIAM J. Numer. Anal. \textbf{34}, 1911 (1997).
+exponential operator, vol.~\textbf{34}, pp.~1911--1925 (1997),
+doi:10.1137/S0036142995280572.
 
 \bibitem{lanczos1950}
 C. Lanczos, An iteration method for the solution of the eigenvalue problem of
@@ -706,7 +711,8 @@ matrix function approximation, arXiv:2211.15643 (2022).
 \bibitem{kandolf2017}
 P. Kandolf and S. D. Relton, A block Krylov method to compute the action of the
 Fr\'echet derivative of a matrix function on a vector with applications to
-condition number estimation, SIAM J. Sci. Comput. \textbf{39}, A1416 (2017).
+condition number estimation, vol.~\textbf{39}, pp.~A1416--A1434 (2017),
+doi:10.1137/16M1077969.
 
 \bibitem{kandolf2021}
 P. Kandolf, A. Koskela, S. D. Relton, and M. Schweitzer, Computing low-rank
@@ -724,8 +730,8 @@ bilinear forms of Hermitian matrix functions, arXiv:2605.12801 (2026).
 
 \bibitem{al-mohy2009}
 A. H. Al-Mohy and N. J. Higham, Computing the Fr\'echet derivative of the matrix
-exponential, with an application to condition number estimation, SIAM J. Matrix
-Anal. Appl. \textbf{30}, 1639 (2009).
+exponential, with an application to condition number estimation,
+vol.~\textbf{30}, pp.~1639--1657 (2009), doi:10.1137/080716426.
 
 \bibitem{davis2011}
 T. A. Davis and Y. Hu, The University of Florida Sparse Matrix Collection,
@@ -738,8 +744,8 @@ method: Electronic structure calculations without a basis, Phys. Rev. Lett.
 
 \bibitem{chen2022}
 T. Chen, A. Greenbaum, C. Musco, and C. Musco, Error bounds for Lanczos-based
-matrix function approximation, SIAM J. Matrix Anal. Appl. \textbf{43}, 787
-(2022).
+matrix function approximation, vol.~\textbf{43}, pp.~787--811 (2022),
+doi:10.1137/21M1427784.
 
 \bibitem{simunec2023}
 I. Simunec, Error bounds for the approximation of matrix functions with rational
@@ -747,16 +753,17 @@ Krylov methods, arXiv:2311.02701 (2023).
 
 \bibitem{beckermann2018}
 B. Beckermann, D. Kressner, and M. Schweitzer, Low-rank updates of matrix
-functions, SIAM J. Matrix Anal. Appl. \textbf{39}, 539 (2018).
+functions, vol.~\textbf{39}, pp.~539--565 (2018), doi:10.1137/17M1140108.
 
 \bibitem{higham2014}
 N. J. Higham and S. D. Relton, Higher order Fr\'echet derivatives of matrix
-functions and the level-2 condition number, SIAM J. Matrix Anal. Appl.
-\textbf{35}, 1019 (2014).
+functions and the level-2 condition number, vol.~\textbf{35}, pp.~1019--1037
+(2014), doi:10.1137/130945259.
 
 \bibitem{rubensson2024}
 E. H. Rubensson, A unifying framework for higher order derivatives of matrix
-functions, SIAM J. Matrix Anal. Appl. \textbf{45}, 1214 (2024).
+functions, vol.~\textbf{45}, pp.~504--528 (2024),
+doi:10.1137/23M1580589.
 
 \bibitem{vanloan1978}
 C. F. Van Loan, Computing integrals involving the matrix exponential, IEEE
