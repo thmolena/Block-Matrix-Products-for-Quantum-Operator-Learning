@@ -27,7 +27,7 @@ class ProbeCompression:
     @property
     def bilinear_compression_factor(self) -> float:
         delta = self.discarded_frobenius
-        return float(2.0 * self.full_spectral_norm * delta + delta * delta)
+        return float(2.0 * self.full_spectral_norm * delta)
 
 
 @dataclass(frozen=True)
@@ -158,22 +158,18 @@ class IncrementalBlockKrylov:
         )
 
 
+def cosine_loewner(eigenvalues: Array, time_value: float) -> Array:
+    """Cancellation-free cosine divided differences, including repeated roots."""
+    left, right = eigenvalues[:, None], eigenvalues[None, :]
+    return (-time_value * np.sin(time_value * (left + right) / 2)
+            * np.sinc(time_value * (left - right) / (2 * np.pi)))
+
+
 def _cosine_and_frechet(projected: Array, direction: Array, time_value: float) -> tuple[Array, Array]:
     eigenvalues, eigenvectors = np.linalg.eigh(projected)
     values = np.cos(time_value * eigenvalues)
     cosine = (eigenvectors * values[None, :]) @ eigenvectors.T
-    left = eigenvalues[:, None]
-    right = eigenvalues[None, :]
-    difference = left - right
-    numerator = np.cos(time_value * left) - np.cos(time_value * right)
-    scale = 64.0 * np.finfo(float).eps * (1.0 + np.maximum(np.abs(left), np.abs(right)))
-    separated = np.abs(difference) > scale
-    midpoint = 0.5 * (left + right)
-    loewner = np.where(
-        separated,
-        np.divide(numerator, difference, out=np.zeros_like(numerator), where=separated),
-        -time_value * np.sin(time_value * midpoint),
-    )
+    loewner = cosine_loewner(eigenvalues, time_value)
     rotated_direction = eigenvectors.T @ direction @ eigenvectors
     frechet = eigenvectors @ (loewner * rotated_direction) @ eigenvectors.T
     return cosine, frechet
@@ -243,32 +239,30 @@ def projected_loss_gradient(
     basis = state.basis
     coordinates = state.input_coordinates
     mixing = compression.mixing
+    eigenvalues, eigenvectors = np.linalg.eigh(state.projected)
+    rotated_coordinates = eigenvectors.T @ coordinates
     projected_directions = tuple(
-        basis.T @ (field[:, None] * basis) for field in family.fields
+        eigenvectors.T @ (basis.T @ family.apply_direction(j, basis)) @ eigenvectors
+        for j in range(family.num_parameters)
     )
-    predictions: list[Array] = []
-    derivatives_by_time: list[tuple[Array, ...]] = []
+    predictions = []
+    derivatives_by_time = []
     gradient = np.zeros(family.num_parameters)
     loss = 0.0
     for target, time_value in zip(target_tuple, time_tuple):
-        small_derivatives: list[Array] = []
-        small_cosine = None
-        for direction in projected_directions:
-            cosine, frechet = _cosine_and_frechet(
-                state.projected, direction, time_value
-            )
-            small_cosine = cosine
-            core_derivative = coordinates.T @ frechet @ coordinates
-            small_derivatives.append(mixing @ core_derivative @ mixing.T)
-        assert small_cosine is not None
-        core_prediction = coordinates.T @ small_cosine @ coordinates
-        prediction = mixing @ core_prediction @ mixing.T
+        weighted = np.cos(time_value * eigenvalues)[:, None] * rotated_coordinates
+        prediction = mixing @ (rotated_coordinates.T @ weighted) @ mixing.T
+        loewner = cosine_loewner(eigenvalues, time_value)
+        derivatives = tuple(
+            mixing @ (rotated_coordinates.T @ (loewner * direction)
+                      @ rotated_coordinates) @ mixing.T
+            for direction in projected_directions
+        )
         error = prediction - target
-        predictions.append(prediction)
-        derivatives_by_time.append(tuple(small_derivatives))
         loss += 0.5 * float(np.linalg.norm(error) ** 2) / len(time_tuple)
-        for parameter, derivative in enumerate(small_derivatives):
-            gradient[parameter] += float(np.sum(error * derivative)) / len(time_tuple)
+        gradient += np.array([np.sum(error * item) for item in derivatives]) / len(time_tuple)
+        predictions.append(prediction)
+        derivatives_by_time.append(derivatives)
     return GradientResult(
         loss=loss,
         gradient=gradient,

@@ -36,7 +36,9 @@ class HamiltonianFamily:
 
     @property
     def derivative_norms(self) -> tuple[float, ...]:
-        return tuple(float(np.max(np.abs(field))) for field in self.fields)
+        return tuple(float(np.max(np.abs(field))) if np.ndim(field) == 1
+                     else float(np.asarray(abs(field).sum(axis=1)).max())
+                     for field in self.fields)
 
     @property
     def uniform_radius(self) -> float:
@@ -53,22 +55,26 @@ class HamiltonianFamily:
             raise ValueError("theta leaves the certified parameter box")
         return theta
 
+    def apply_direction(self, index: int, block: Array) -> Array:
+        field = self.fields[index]
+        return field[:, None] * block if np.ndim(field) == 1 else field @ block
+
     def apply(self, theta: Array, block: Array) -> Array:
         theta = self.validate_theta(theta)
         block = np.asarray(block, dtype=float)
         result = self.base @ block
-        for coefficient, field in zip(theta, self.fields):
-            result = result + coefficient * field[:, None] * block
+        for j, coefficient in enumerate(theta):
+            result = result + coefficient * self.apply_direction(j, block)
         return np.asarray(result)
 
     def dense(self, theta: Array) -> Array:
         theta = self.validate_theta(theta)
         matrix = self.base.toarray()
-        diagonal = sum(
-            (coefficient * field for coefficient, field in zip(theta, self.fields)),
-            start=np.zeros(self.n),
-        )
-        matrix[np.diag_indices(self.n)] += diagonal
+        for coefficient, field in zip(theta, self.fields):
+            if np.ndim(field) == 1:
+                matrix[np.diag_indices(self.n)] += coefficient * field
+            else:
+                matrix += coefficient * field.toarray()
         return matrix
 
 

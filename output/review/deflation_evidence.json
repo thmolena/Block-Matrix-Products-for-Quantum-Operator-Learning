@@ -1,0 +1,21 @@
+{
+  "python": "3.13.12",
+  "numpy": "2.4.3",
+  "scipy": "1.17.1",
+  "candidate_rank": 2,
+  "returned_block_width": 1,
+  "discarded_span_residual": 1.0,
+  "exact_K2_dimension": 5,
+  "returned_K2_dimension": 4,
+  "orthogonality_defect": 0.0,
+  "quadratic_moment_error": 1.0,
+  "requested_tolerance": 1e-08,
+  "selection_bound": 2.5899315865684225e-14,
+  "evaluated_bound": 32.154513044762034,
+  "returned_depth": 2,
+  "computed_gradient": -0.21783961811686403,
+  "reference_gradient": -0.6724883315297049,
+  "analytic_gradient": -0.6724883315297049,
+  "reference_vs_analytic": 0.0,
+  "gradient_discrepancy": 0.45464871341284085
+}

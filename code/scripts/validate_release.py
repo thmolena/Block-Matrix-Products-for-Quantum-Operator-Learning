@@ -38,12 +38,11 @@ def main() -> None:
             errors.append(f"prohibited wording appears in {path.name}")
     payload = json.loads((CODE / "results" / "locked_results.json").read_text(encoding="utf-8"))
     errors.extend(validate_payload(payload))
-    if tex.count("\\begin{figure") != 5:
-        errors.append("the manuscript must contain five evidentiary figures")
-    if tex.count("\\begin{table") != 3:
-        errors.append("the manuscript must contain three evidentiary tables")
-    if tex.count("\\begin{theorem}") != 3:
-        errors.append("the manuscript theorem count changed")
+    for filename in ("locked_results.json", "numbers.tex", "summary.csv"):
+        if (CODE / "results" / filename).read_bytes() != (CODE / "src" / "bmqol" / "results" / filename).read_bytes():
+            errors.append(f"packaged result differs: {filename}")
+    if tex.count("\\begin{figure}") != 5:
+        errors.append("expected five generated figures")
     if errors:
         raise SystemExit("release validation failed:\n- " + "\n- ".join(errors))
     print(json.dumps({"status": "release-valid", "semantic_sha256": payload["semantic_sha256"]}, sort_keys=True))

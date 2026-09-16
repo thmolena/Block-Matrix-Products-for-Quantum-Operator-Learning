@@ -73,6 +73,7 @@ def select_probe_rank(
     *,
     tolerance: float,
     rank_budget_fraction: float = 0.20,
+    compression_method: str = "loss-aware",
 ) -> tuple[ProbeCompression, float]:
     """Choose the smallest SVD rank within the compression error budget."""
 
@@ -85,7 +86,8 @@ def select_probe_rank(
     budget = float(rank_budget_fraction * tolerance)
     for compression in probe_compression_path(probe_block):
         bound = compression_gradient_bound(
-            compression, target_tuple, time_tuple, derivative_norms
+            compression, target_tuple, time_tuple, derivative_norms,
+            method=compression_method,
         )
         if float(np.linalg.norm(bound)) <= budget:
             return compression, budget
@@ -102,6 +104,8 @@ def adaptive_gradient(
     tolerance: float,
     candidate_depths: Sequence[int] = (4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24),
     rank_budget_fraction: float = 0.20,
+    compression_method: str = "loss-aware",
+    tail_method: str = "chebyshev",
 ) -> AdaptiveResult:
     """Return the first depth whose combined rank-depth bound is feasible."""
 
@@ -119,6 +123,7 @@ def adaptive_gradient(
         family.derivative_norms,
         tolerance=tolerance,
         rank_budget_fraction=rank_budget_fraction,
+        compression_method=compression_method,
     )
     factorization = IncrementalBlockKrylov(
         family, theta, compression.coordinates
@@ -138,6 +143,8 @@ def adaptive_gradient(
             family.derivative_norms,
             polynomial_degree=state.block_steps,
             radius=family.uniform_radius,
+            compression_method=compression_method,
+            tail_method=tail_method,
         )
         records.append(
             DepthRecord(
@@ -174,6 +181,50 @@ def adaptive_gradient(
     )
 
 
+def select_preflight_plan(family, probe_block, targets, times, *, tolerance,
+                          candidate_depths, selection="joint", rank_budget_fraction=0.2,
+                          compression_method="loss-aware", tail_method="chebyshev"):
+    """Minimize (m*r, r, m) over the finite certified grid, or run an ablation.
+
+    The plan is independent of theta and may be reused for fixed observations,
+    probes, parameter box, times and tolerance. It is not a runtime optimum.
+    """
+    depths = tuple(candidate_depths)
+    if (not depths or any(int(m) != m or m < 2 for m in depths)
+            or any(b <= a for a, b in zip(depths, depths[1:]))):
+        raise ValueError("candidate depths must be strictly increasing integers >= 2")
+    if not np.isfinite(tolerance) or tolerance <= 0:
+        raise ValueError("tolerance must be finite and positive")
+    if selection not in ("joint", "rank_first", "full"):
+        raise ValueError("unknown selection strategy")
+    if not 0 < rank_budget_fraction < 1:
+        raise ValueError("rank budget fraction must lie in (0,1)")
+    path = probe_compression_path(probe_block)
+    if selection == "full":
+        path = path[-1:]
+    elif selection == "rank_first":
+        path = tuple(c for c in path if np.linalg.norm(compression_gradient_bound(
+            c, targets, times, family.derivative_norms, method=compression_method))
+                     <= rank_budget_fraction * tolerance)[:1]
+    candidates = []
+    for compression in path:
+        if np.linalg.norm(compression_gradient_bound(
+                compression, targets, times, family.derivative_norms,
+                method=compression_method)) > tolerance:
+            continue
+        for depth in depths:
+            bound = preflight_certificate(compression, targets, times,
+                family.derivative_norms, polynomial_degree=depth, radius=family.uniform_radius,
+                compression_method=compression_method, tail_method=tail_method)
+            if bound.total_norm <= tolerance:
+                candidates.append((depth * compression.rank, compression.rank, depth, compression, bound))
+                break
+    if not candidates:
+        raise ValueError("candidate depth grid does not certify the requested tolerance")
+    _, _, depth, compression, bound = min(candidates, key=lambda x: x[:3])
+    return compression, depth, bound
+
+
 def preflight_gradient(
     family,
     theta: Array,
@@ -184,6 +235,10 @@ def preflight_gradient(
     tolerance: float,
     candidate_depths: Sequence[int] = (4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32),
     rank_budget_fraction: float = 0.20,
+    selection: str = "joint",
+    plan=None,
+    compression_method: str = "loss-aware",
+    tail_method: str = "chebyshev",
 ) -> PreflightResult:
     """Select rank and depth before executing one compressed factorization."""
 
@@ -194,32 +249,19 @@ def preflight_gradient(
         raise ValueError("candidate depths must be strictly increasing")
     target_tuple = tuple(np.asarray(value, dtype=float) for value in targets)
     time_tuple = tuple(float(value) for value in times)
-    compression, rank_budget = select_probe_rank(
-        probe_block,
-        target_tuple,
-        time_tuple,
-        family.derivative_norms,
-        tolerance=tolerance,
-        rank_budget_fraction=rank_budget_fraction,
-    )
-    records: list[PreflightRecord] = []
-    selected = None
-    for depth in depths:
-        bound = preflight_certificate(
-            compression,
-            target_tuple,
-            time_tuple,
-            family.derivative_norms,
-            polynomial_degree=depth,
-            radius=family.uniform_radius,
-        )
-        records.append(PreflightRecord(depth=depth, certificate=bound))
-        if bound.total_norm <= tolerance:
-            selected = (depth, bound)
-            break
-    if selected is None:
-        raise ValueError("candidate depth grid does not certify the requested tolerance")
-    depth, selection_bound = selected
+    if plan is None:
+        plan = select_preflight_plan(family, probe_block, target_tuple, time_tuple,
+            tolerance=tolerance, candidate_depths=depths, selection=selection,
+            rank_budget_fraction=rank_budget_fraction,
+            compression_method=compression_method, tail_method=tail_method)
+    compression, depth, selection_bound = plan
+    if selection_bound.total_norm > tolerance:
+        raise ValueError("cached plan exceeds the requested tolerance")
+    rank_budget = float(rank_budget_fraction * tolerance)
+    records = [PreflightRecord(m, preflight_certificate(compression, target_tuple,
+        time_tuple, family.derivative_norms, polynomial_degree=m,
+        radius=family.uniform_radius, compression_method=compression_method,
+        tail_method=tail_method)) for m in depths if m <= depth]
     factorization = IncrementalBlockKrylov(
         family, theta, compression.coordinates
     )
@@ -234,6 +276,8 @@ def preflight_gradient(
         family.derivative_norms,
         polynomial_degree=state.block_steps,
         radius=family.uniform_radius,
+        compression_method=compression_method,
+        tail_method=tail_method,
     )
     return PreflightResult(
         result=result,

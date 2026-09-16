@@ -1,0 +1,7 @@
+{
+  "main.tex": "98848076f80ace9ccba7e907b53d4508b0710da45fb7365eb0903783de1c24f7",
+  "main.pdf": "8ff62387c8e0e728380c218577a845570e64bfa7585b2299a4385f4a6b3c4c43",
+  "code/src/bmqol/krylov.py": "1c98ffa47b0a8086a31ac3b022ed4cc5773dcd1fc2986d3fd35ba1132e3af26d",
+  "code/src/bmqol/adaptive.py": "cf6a07d3fc7656ea4186d5954baf4439fc015db5d128e5d6c3a18576bac115c8",
+  "code/results/locked_results.json": "6466164947da24158ce2d702e29b74fc76256dc6eae14aae6ea1ee8e1735cbc8"
+}

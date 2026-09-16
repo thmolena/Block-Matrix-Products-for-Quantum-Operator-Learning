@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Certified rank-depth adaptive block matrix products for quantum operator learning.">
-  <title>Rank--Depth Adaptive Block Matrix Products for Quantum Operator Learning</title>
+  <title>Certified Rank–Depth Selection for Block Matrix-Function Gradients</title>
   <style>
     :root { --ink:#132238; --muted:#586579; --paper:#fbfaf7; --navy:#173f67; --teal:#177f79; --line:#d9dee5; --warm:#f0ebe2; }
     * { box-sizing:border-box; }
@@ -46,7 +46,7 @@
   <header>
     <div class="wrap">
       <p class="kicker">Matrix functions · block Krylov methods · operator learning</p>
-      <h1>Rank--Depth Adaptive Block Matrix Products for Quantum Operator Learning</h1>
+      <h1>Certified Rank–Depth Selection for Block Matrix-Function Gradients</h1>
       <p class="lead">A preflight certificate selects probe rank and Krylov depth before the first Hamiltonian application, then evaluates a full block loss gradient through one compressed factorization.</p>
       <div class="actions">
         <a class="button primary" href="main.pdf">Read the manuscript</a>
@@ -58,12 +58,12 @@
   <main class="wrap">
     <section>
       <h2>Certified resource selection</h2>
-      <p>For an affine symmetric operator family and correlated probe block, the method combines a uniform parameter-box spectral bound, an explicit SVD truncation term, and cosine Taylor tails. Rank and depth are selected entirely from registered inputs.</p>
+      <p>For an affine symmetric operator family and correlated probe block, the method combines a uniform parameter-box spectral bound, a loss-aware discarded-block term, and cosine Chebyshev tails. Rank and depth are selected entirely from specified inputs.</p>
       <div class="equation">‖g − ĝ<sub>m,r</sub>‖<sub>2</sub> ≤ (Σ<sub>j</sub> η<sub>j,m,r</sub><sup>2</sup>)<sup>1/2</sup> ≤ ε</div>
       <div class="grid">
-        <article class="card"><div class="metric">5--6</div><h3>Selected rank</h3><p>Eight correlated probe columns are compressed with the discarded singular tail charged to the certificate.</p></article>
-        <article class="card"><div class="metric">24</div><h3>Selected depth</h3><p>The registered tolerance is 10<sup>−3</sup> for evolution times 2, 4, and 6.</p></article>
-        <article class="card"><div class="metric">120--144</div><h3>Vector equivalents</h3><p>The same-depth uncompressed block requires 192; coordinatewise finite differences require 1,152.</p></article>
+        <article class="card"><div class="metric">3</div><h3>Selected rank</h3><p>Eight correlated probe columns are compressed with the discarded singular tail charged to the certificate.</p></article>
+        <article class="card"><div class="metric">16</div><h3>Selected depth</h3><p>The specified tolerance is 10<sup>−3</sup> for evolution times 2, 4, and 6.</p></article>
+        <article class="card"><div class="metric">48</div><h3>Vector equivalents</h3><p>The original joint rule requires 120; refined full-rank certification requires 128.</p></article>
       </div>
     </section>
     <section>
@@ -71,28 +71,17 @@
       <div class="figures">
         <figure><img src="code/results/figures/rank_depth_map.png" alt="Heatmaps of selected rank and Krylov depth across tolerance and time horizon"><figcaption>Rank responds mainly to tolerance; depth grows with time horizon and requested accuracy. Every cell satisfies the preflight certificate.</figcaption></figure>
         <figure><img src="code/results/figures/certificate_frontier.png" alt="Certificate and observed gradient error versus Krylov depth"><figcaption>The bound covers every observed error and exposes substantial conservatism after the numerical reference floor is reached.</figcaption></figure>
-        <figure><img src="code/results/figures/probe_spectrum.png" alt="Normalized singular values for four probe blocks"><figcaption>The singular spectra identify the retained ranks; discarded directions are bounded rather than silently removed.</figcaption></figure>
-        <figure><img src="code/results/figures/runtime_scaling.png" alt="Runtime scaling for adaptive, full-block, and finite-difference gradients"><figcaption>Three positive CPU comparisons and the largest-matrix timing exception are shown together.</figcaption></figure>
+        <figure><img src="code/results/figures/probe_spectrum.png" alt="Accepted recovery iterates and final errors on larger lattice problems"><figcaption>Larger simulated lattice problems demonstrate active compression and successful recovery. The original failed fits remain in the manuscript and records.</figcaption></figure>
+        <figure><img src="code/results/figures/runtime_scaling.png" alt="Runtimes for certified methods and observed-accuracy comparisons"><figcaption>Certification saves work relative to certified full rank, but low-depth observed-accuracy choices are considerably faster.</figcaption></figure>
       </div>
     </section>
     <section>
-      <h2>Authenticated matrix study</h2>
-      <table>
-        <thead><tr><th>Matrix</th><th>Dimension</th><th>Rank</th><th>Depth</th><th>Certificate</th><th>Full / proposed time</th></tr></thead>
-        <tbody>
-          <tr><td>Si2</td><td>769</td><td>6</td><td>24</td><td>1.40×10<sup>−4</sup></td><td>1.36</td></tr>
-          <tr><td>SiH4</td><td>5,041</td><td>5</td><td>24</td><td>2.09×10<sup>−4</sup></td><td>1.65</td></tr>
-          <tr><td>benzene</td><td>8,219</td><td>6</td><td>24</td><td>1.39×10<sup>−4</sup></td><td>2.04</td></tr>
-          <tr><td>Si5H12</td><td>19,896</td><td>6</td><td>24</td><td>1.47×10<sup>−4</sup></td><td>0.99</td></tr>
-        </tbody>
-      </table>
-      <p class="note">The PARSEC Hamiltonians are authentic SuiteSparse inputs with pinned archive digests. The parameter fields, probes, and targets are deterministic numerical constructions. The largest case demonstrates that reduced action count does not guarantee lower wall time.</p>
-    </section>
-    <section>
-      <h2>Reproduction contract</h2>
-      <p>The installable package records all timing repetitions, numerical errors, certificates, action ledgers, archive digests, orthogonality defects, and the timing-independent semantic digest <code>eae62cf6af1c…</code>. The small dense tests independently compare projected derivatives with direct eigendecompositions.</p>
+      <h2>What the experiments establish</h2>
+      <p>Four authenticated Hamiltonians are tested against independent augmented-exponential references. Refined joint selection chooses rank 3 and depth 16, reducing work by 60% from the original joint rule. An executable incremental full-rank method remains faster at the primary tolerance; nominal work savings do not guarantee runtime savings.</p>
+      <p>The larger factorial study contains 288 recovery runs on 256- and 1,024-site chains. All meet parameter error 0.001, with compressed gradients during certified descent. Strict final accuracy can remove work savings. The original 36 recovery runs and their failed fits are preserved; 12 of 36 stress cases now compress probe rank.</p>
+      <p class="note">Exact-arithmetic bounds do not certify every floating-point operation. The physical experiment is simulated amplitude learning, not device data or quantum advantage.</p>
     </section>
   </main>
-  <footer><div class="wrap">Research manuscript and CPU reproduction package · August 2026</div></footer>
+  <footer><div class="wrap">Molena Huynh · <a href="README.md">Code and reproducibility</a></div></footer>
 </body>
 </html>
